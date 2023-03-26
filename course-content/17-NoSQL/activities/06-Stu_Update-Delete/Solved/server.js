@@ -1,0 +1,78 @@
+const express = require('express');
+const mongodb = require('mongodb');
+const { MongoClient, ObjectId } = mongodb;
+// const {MongoClient, mongodb} = require('mongodb');
+
+//const ObjectId = require('mongodb').ObjectId;
+// https://www.mongodb.com/docs/manual/reference/method/ObjectId/
+
+// const {ObjectId} = require('mongodb');
+
+const app = express();
+const port = 3001;
+
+const connectionStringURI = `mongodb://localhost:27017/inventoryDB`;
+
+let db;
+
+mongodb.MongoClient.connect(
+  connectionStringURI,
+  { useNewUrlParser: true, useUnifiedTopology: true },
+  (err, client) => {
+    if (err) {
+      return console.error(err);
+    }
+    db = client.db();
+    app.listen(port, () => {
+      console.log(`Example app listening at http://localhost:${port}`);
+    });
+  }
+);
+
+app.use(express.json());
+
+app.post('/create', (req, res) => {
+  db.collection('bookCollection').insertOne(
+    { title: req.body.title, author: req.body.author },
+    (err, results) => {
+      if (err) throw err;
+      res.json(results);
+    }
+  );
+});
+
+app.get('/read', (req, res) => {
+  db.collection('bookCollection')
+    .find()
+    .toArray((err, results) => {
+      if (err) throw err;
+      res.send(results);
+    });
+});
+
+// To delete an object, the numerical id string must be wrapped with ObjectID()
+app.delete('/delete', (req, res) => {
+  // Use deleteOne() to delete one object
+  db.collection('bookCollection').deleteOne(
+    // This is the filter. The delete only the document that matches the _id provided in the request body
+    { _id: mongodb.ObjectId(req.body.id) },
+    (err) => {
+      if (err) throw err;
+      res.send('Document deleted');
+    }
+  );
+});
+
+// To delete an object, the numerical id string must be wrapped with ObjectID()
+app.delete('/update', (req, res) => {
+  // Use deleteOne() to delete one object
+  db.collection('bookCollection').updateOne(
+    // This is the filter. The update only the document that matches the _id provided in the request body
+    { _id: mongodb.ObjectId(req.body.id) }, 
+    { $set: req.body.book },
+    (err) => {
+      if (err) throw err;
+      res.send('Document deleted');
+    }
+  );
+});
